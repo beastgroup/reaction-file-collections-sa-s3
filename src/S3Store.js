@@ -30,14 +30,15 @@ export default class S3Store extends StorageAdapter {
 
   _fileKeyMaker(fileRecord) {
     const info = fileRecord.infoForCopy(this.name);
-    
+
     debug("S3Store _fileKeyMaker fileRecord info:", info);
     debug("S3Store _fileKeyMaker fileRecord size:", fileRecord.size());
 
     const result = {
       _id: info.key || fileRecord._id,
-      filename: info.name || fileRecord.name() || `${fileRecord.collectionName}-${fileRecord._id}`,
-      size: info.size || fileRecord.size()
+      filename: info.name || fileRecord.name(), //   || `${fileRecord.collectionName}-${fileRecord._id}`,
+      size: info.size || fileRecord.size(),
+      collectionName: fileRecord.collectionName
     };
 
     debug("S3Store _fileKeyMaker result:", result);
@@ -94,9 +95,11 @@ export default class S3Store extends StorageAdapter {
   }
 
   async _getWriteStream(fileKey, options = {}) {
+    const { collectionName, _id, filename } = fileKey;
     const opts = {
       Bucket: process.env.AWS_S3_BUCKET,
-      Key: `${Date.now()}-${fileKey.filename}`
+      // Key: `${Date.now()}-${fileKey.filename}`,
+      Key: `assets/files/${collectionName}/${_id}/${this.name}/${filename}`
     };
 
     debug("S3Store _getWriteStream opts:", opts);
