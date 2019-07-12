@@ -4,4 +4,4 @@
 
 import Logger from "@reactioncommerce/logger";
 
-export default (msg) => Logger.debug(`reaction-file-collections - ${msg}`);
+export default (...msg) => Logger.debug(`reaction-file-collections - ${msg.join(" ")}`);

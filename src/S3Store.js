@@ -10,7 +10,10 @@ export default class S3Store extends StorageAdapter {
     name,
     objectACL,
     transformRead,
-    transformWrite
+    transformWrite,
+    bucket,
+    region,
+    keyPrefix = null
   } = {}) {
     super({
       fileKeyMaker,
@@ -21,8 +24,10 @@ export default class S3Store extends StorageAdapter {
 
     this.s3 = new S3({
       apiVersion: "2006-03-01",
-      region: process.env.AWS_S3_REGION
+      region: region || process.env.AWS_S3_REGION
     });
+    this.bucket = bucket || process.env.AWS_S3_BUCKET;
+    this.keyPrefix = keyPrefix;
 
     this.collectionName = `${collectionPrefix}${name}`.trim();
     this.objectACL = objectACL;
@@ -56,7 +61,7 @@ export default class S3Store extends StorageAdapter {
     debug("S3Store _getReadStream");
 
     const opts = {
-      Bucket: process.env.AWS_S3_BUCKET,
+      Bucket: this.bucket,
       Key: fileKey._id
     };
 
@@ -97,9 +102,9 @@ export default class S3Store extends StorageAdapter {
   async _getWriteStream(fileKey, options = {}) {
     const { collectionName, _id, filename } = fileKey;
     const opts = {
-      Bucket: process.env.AWS_S3_BUCKET,
+      Bucket: this.bucket,
       // Key: `${Date.now()}-${fileKey.filename}`,
-      Key: `assets/files/${collectionName}/${_id}/${this.name}/${filename}`
+      Key: `${this.keyPrefix ? this.keyPrefix.concat("/") : ""}${collectionName}/${_id}/${this.name}/${filename}`
     };
 
     debug("S3Store _getWriteStream opts:", opts);
@@ -183,7 +188,7 @@ export default class S3Store extends StorageAdapter {
 
     return new Promise((resolve, reject) => {
       this.s3.deleteObject({
-        Bucket: process.env.AWS_S3_BUCKET,
+        Bucket: this.bucket,
         Key: fileKey._id
       }, (error, result) => {
         if (error) {
